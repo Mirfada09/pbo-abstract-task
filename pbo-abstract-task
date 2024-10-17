@@ -1,0 +1,168 @@
+using System;
+using System.Collections.Generic;
+
+abstract class Robot
+{
+    public string Nama { get; set; }
+    public int Energi { get; set; }
+    public int Armor { get; set; }
+    public int Serangan { get; set; }
+
+    public Robot(string nama, int energi, int armor, int serangan)
+    {
+        Nama = nama;
+        Energi = energi;
+        Armor = armor;
+        Serangan = serangan;
+    }
+
+    public abstract void Serang(Robot target);
+    public abstract void GunakanKemampuan(IKemampuan kemampuan);
+
+    public void CetakInformasi()
+    {
+        Console.WriteLine("\n--------------------------");
+        Console.WriteLine($"Nama: {Nama}");
+        Console.WriteLine($"Energi: {Energi}");
+        Console.WriteLine($"Armor: {Armor}");
+        Console.WriteLine($"Serangan: {Serangan}");
+        Console.WriteLine("--------------------------\n");
+    }
+}
+
+class BosRobot : Robot
+{
+    public int Pertahanan { get; set; }
+
+    public BosRobot(string nama, int energi, int pertahanan, int serangan)
+        : base(nama, energi, pertahanan, serangan)
+    {
+        Pertahanan = pertahanan;
+    }
+
+    public override void Serang(Robot target)
+    {
+        int damage = Serangan - target.Armor;
+        if (damage < 0) damage = 0;
+        target.Energi -= damage;
+        Console.WriteLine($"{Nama} menyerang {target.Nama} dengan serangan {Serangan}. Energi {target.Nama} berkurang {damage} poin.\n");
+    }
+
+    public void Diserang(Robot penyerang)
+    {
+        int damage = penyerang.Serangan - Pertahanan;
+        if (damage < 0) damage = 0;
+        Energi -= damage;
+        Console.WriteLine($"{Nama} diserang oleh {penyerang.Nama}. Energi berkurang {damage} poin.\n");
+        if (Energi <= 0) Mati();
+    }
+
+    public override void GunakanKemampuan(IKemampuan kemampuan)
+    {
+        Console.WriteLine($"{Nama} menggunakan kemampuan:\n");
+        kemampuan.Aktivasi(this);
+        Console.WriteLine();
+    }
+
+    private void Mati()
+    {
+        Console.WriteLine($"{Nama} telah dikalahkan!\n");
+    }
+}
+
+
+interface IKemampuan
+{
+    void Aktivasi(Robot target);
+}
+
+class Perbaikan : IKemampuan
+{
+    public void Aktivasi(Robot target)
+    {
+        target.Energi += 30;
+        Console.WriteLine($"{target.Nama} menggunakan Perbaikan. Energinya bertambah 30 poin.");
+    }
+}
+
+class SeranganListrik : IKemampuan
+{
+    public void Aktivasi(Robot target)
+    {
+        int damage = 20;
+        target.Energi -= damage;
+        Console.WriteLine($"{target.Nama} terkena Serangan Listrik. Energi berkurang {damage} poin.");
+    }
+}
+
+class SeranganPlasma : IKemampuan
+{
+    public void Aktivasi(Robot target)
+    {
+        int damage = 40;
+        target.Armor -= 5;
+        target.Energi -= damage;
+        Console.WriteLine($"{target.Nama} terkena Serangan Plasma. Energi berkurang {damage} poin, Armor berkurang 5 poin.");
+    }
+}
+
+class PertahananSuper : IKemampuan
+{
+    public void Aktivasi(Robot target)
+    {
+        target.Armor += 20;
+        Console.WriteLine($"{target.Nama} menggunakan Pertahanan Super. Armor bertambah 20 poin.");
+    }
+}
+
+class RobotPetarung : Robot
+{
+    public RobotPetarung(string nama, int energi, int armor, int serangan)
+        : base(nama, energi, armor, serangan) { }
+
+    public override void Serang(Robot target)
+    {
+        int damage = Serangan - target.Armor;
+        if (damage < 0) damage = 0;
+        target.Energi -= damage;
+        Console.WriteLine($"{Nama} menyerang {target.Nama}. Energi {target.Nama} berkurang {damage} poin.\n");
+    }
+
+    public override void GunakanKemampuan(IKemampuan kemampuan)
+    {
+        Console.WriteLine($"{Nama} menggunakan kemampuan:\n");
+        kemampuan.Aktivasi(this);
+        Console.WriteLine();
+    }
+}
+
+class Program
+{
+    static void Main()
+    {
+        BosRobot bos = new BosRobot("Bos Euna", 200, 40, 30);
+        Robot robot1 = new RobotPetarung("Robot Charlie", 100, 20, 25);
+        Robot robot2 = new RobotPetarung("Robot Archie", 100, 15, 20);
+
+        IKemampuan perbaikan = new Perbaikan();
+        IKemampuan seranganListrik = new SeranganListrik(); 
+        IKemampuan seranganPlasma = new SeranganPlasma();
+        IKemampuan pertahananSuper = new PertahananSuper();
+
+        bos.CetakInformasi();
+        robot1.CetakInformasi();
+        robot2.CetakInformasi();
+
+        robot1.Serang(bos);
+        bos.Diserang(robot1); 
+
+        bos.GunakanKemampuan(perbaikan);
+        robot2.GunakanKemampuan(seranganPlasma);
+        robot2.GunakanKemampuan(seranganListrik); 
+        robot1.GunakanKemampuan(pertahananSuper);
+
+        bos.CetakInformasi();
+        robot1.CetakInformasi();
+        robot2.CetakInformasi();
+    }
+}
